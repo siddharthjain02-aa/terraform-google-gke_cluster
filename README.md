@@ -17,6 +17,44 @@ provider "helm" {
 
 Pay attention to the `gke_cluster` module output variables used here.
 
+## kubelet_config Configuration
+This module supports kubelet configuration through the `kubelet_config` parameter in `node_pools`.
+
+### Supported Parameters
+The parameters are compatible with Google provider versions 4.55.0 to 5.43.1.
+
+| Parameter | Type | Description                                       | Default |
+|-----------|------|---------------------------------------------------|---------|
+| `cpu_manager_policy` | string | CPU management policy. Values: "none" or "static" | "none" |
+| `cpu_cfs_quota` | bool | Enable CPU CFS quota enforcement for containers   | null |
+| `cpu_cfs_quota_period` | string | CFS quota period. between "1ms" to "1000ms"       | null |
+| `pod_pids_limit` | number | Maximum PIDs per pod. Range: 1024-4194304         | null |
+
+- **Google provider 5.44.0+** introduced additional kubelet parameters that are not supported by this module version
+- If you need newer kubelet features, the module will require updates that may break backward compatibility
+
+### Configuration Block Defaults
+- `kubelet_config = null`: No kubelet configuration is applied (uses GKE defaults)
+- `kubelet_config = {}`: Creates kubelet config block with `cpu_manager_policy = ""` (empty string)
+- All parameters are optional except `cpu_manager_policy` which defaults to empty string when kubelet_config block is created
+- Empty string for `cpu_manager_policy` prevents permadrift (a bug fixed in Google provider v6.4.0)
+
+### Usage Example
+```terraform
+module "gke_cluster" {
+  source = "airasia/gke_cluster/google"
+  node_pools = [{
+    # ... other node pool configuration
+    kubelet_config = {
+      cpu_manager_policy   = "static"        # string
+      cpu_cfs_quota        = true            # bool  
+      cpu_cfs_quota_period = "100ms"         # string
+      pod_pids_limit       = 2048            # number
+    }
+  }]
+}
+```
+
 # Upgrade guide from v2.15.0 to v2.16.0
 
 Drop the use of attributes such as `node_count_initial_per_zone` and/or `node_count_current_per_zone` (if any) from the list of objects in `var.node_pools`.

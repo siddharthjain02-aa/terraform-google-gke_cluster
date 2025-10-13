@@ -1,13 +1,13 @@
 terraform {
-  required_version = ">= 0.13.1" # see https://releases.hashicorp.com/terraform/
+  required_version = ">= 1.3.0" # see https://releases.hashicorp.com/terraform/
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 4.45.0" # see https://github.com/terraform-providers/terraform-provider-google/releases
+      version = ">= 4.55.0" # see https://github.com/terraform-providers/terraform-provider-google/releases
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = ">= 4.45.0" # see https://github.com/terraform-providers/terraform-provider-google-beta/releases
+      version = ">= 4.55.0" # see https://github.com/terraform-providers/terraform-provider-google-beta/releases
     }
   }
 }
@@ -229,7 +229,9 @@ resource "google_container_node_pool" "node_pools" {
     preemptible  = each.value.preemptible
     spot         = each.value.spot
     # Kubernetes node labels that can be used in node selectors to control how workloads are scheduled to nodes
-    labels = each.value.node_labels
+    # Predefined kubernetes labels are set to address a bug in provider when removing all labels. Bug fixed in Google provider 6.18.1.
+    # https://github.com/hashicorp/terraform-provider-google/issues/15848#issuecomment-2669370077
+    labels = merge(local.predefined_node_resource_labels, each.value.node_labels)
     # Resource labels are used to manage resources in GCP organization and to breakdown resources.
     # GKE automatically adds several resource labels to node pools. They should not be modified or deleted.
     # see https://cloud.google.com/kubernetes-engine/docs/how-to/creating-managing-labels#automatically-applied-labels
@@ -268,12 +270,17 @@ resource "google_container_node_pool" "node_pools" {
       mode = each.value.enable_gke_metadata_server && var.enable_workload_identity ? "GKE_METADATA" : "GCE_METADATA"
     }
     dynamic "kubelet_config" {
+      # Kubelet configuration supported attributes available in provider 4.85.0
+      # See https://registry.terraform.io/providers/hashicorp/google/4.85.0/docs/resources/container_cluster#nested_kubelet_config
+      # See https://cloud.google.com/kubernetes-engine/docs/how-to/node-system-config#kubelet-options
       for_each = each.value.kubelet_config == null ? [] : [each.value.kubelet_config]
       iterator = kubelet_config
       content {
-        cpu_cfs_quota      = kubelet_config.value.cpu_cfs_quota
-        cpu_manager_policy = kubelet_config.value.cpu_manager_policy
-        pod_pids_limit     = kubelet_config.value.pod_pids_limit
+        # cpu_manager_policy must be set when kubelet_config is, but causes permadrift unless set to undocumented empty value. Bug fixed in Google provider v6.4.0.
+        cpu_manager_policy   = lookup(kubelet_config.value, "cpu_manager_policy") != null ? lookup(kubelet_config.value, "cpu_manager_policy") : ""
+        cpu_cfs_quota        = lookup(kubelet_config.value, "cpu_cfs_quota", null)
+        cpu_cfs_quota_period = lookup(kubelet_config.value, "cpu_cfs_quota_period", null)
+        pod_pids_limit       = lookup(kubelet_config.value, "pod_pids_limit", null)
       }
     }
   }
