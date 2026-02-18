@@ -199,7 +199,7 @@ resource "google_container_node_pool" "node_pools" {
   name               = each.value.node_pool_name
   location           = local.gke_location
   cluster            = google_container_cluster.k8s_cluster.name
-  initial_node_count = each.value.enable_autoscaling ? each.value.node_count_min_per_zone : each.value.node_count_per_zone
+  initial_node_count = each.value.node_count_min_per_zone
   max_pods_per_node  = each.value.max_pods_per_node
   dynamic "autoscaling" {
     for_each = each.value.enable_autoscaling ? [1] : []
