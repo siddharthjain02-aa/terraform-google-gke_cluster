@@ -243,14 +243,12 @@ variable "node_pools" {
   description = <<-EOT
   node_pool_name: An arbitrary name to identify the GKE node pool and its VMs & VM instance groups.
   
-  enable_autoscaling: Whether to enable autoscaling for this node pool. Defaults to true.
-
-  node_count_min_per_zone: The number of nodes (per zone) for this nodepool. When enable_autoscaling
-  is true, this is the minimum node count for auto-down-scaling. When enable_autoscaling is false,
-  this is the static node count. Always required.
+  node_count_min_per_zone: The number of nodes (per zone) for this nodepool. When autoscaling is
+  enabled (node_count_max_per_zone > 0), this is the minimum node count for auto-down-scaling.
+  When autoscaling is disabled (node_count_max_per_zone = 0), this is the static node count.
 
   node_count_max_per_zone: The maximum number of nodes (per zone) this nodepool will allocate if
-  auto-up-scaling occurs. Required only when enable_autoscaling is true.
+  auto-up-scaling occurs. Set to 0 to disable autoscaling and use a static node count.
 
   node_resource_labels: The GCE resource labels (a map of key/value pairs) to be applied to the nodes.
   Resource labels are applied to all nodes and persistent disks in the node pool. It can be used to track information
@@ -325,9 +323,8 @@ variable "node_pools" {
   EOT
   type = list(object({
     node_pool_name             = string
-    enable_autoscaling         = optional(bool, true)
     node_count_min_per_zone    = number
-    node_count_max_per_zone    = optional(number, null)
+    node_count_max_per_zone    = number
     node_resource_labels       = optional(map(string), {})
     node_labels                = map(string)
     node_taints                = list(object({ key = string, value = string, effect = string }))
@@ -372,13 +369,6 @@ variable "node_pools" {
     network_config             = null
     oauth_scopes               = null
   }]
-  validation {
-    condition = alltrue([
-      for np in var.node_pools :
-      np.enable_autoscaling ? np.node_count_max_per_zone != null : true
-    ])
-    error_message = "node_count_max_per_zone must be set when enable_autoscaling is true."
-  }
 }
 
 variable "cluster_logging_service" {

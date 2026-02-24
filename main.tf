@@ -202,7 +202,7 @@ resource "google_container_node_pool" "node_pools" {
   initial_node_count = each.value.node_count_min_per_zone
   max_pods_per_node  = each.value.max_pods_per_node
   dynamic "autoscaling" {
-    for_each = each.value.enable_autoscaling ? [1] : []
+    for_each = each.value.node_count_max_per_zone > 0 ? [1] : []
     content {
       min_node_count  = each.value.node_count_min_per_zone
       max_node_count  = each.value.node_count_max_per_zone
