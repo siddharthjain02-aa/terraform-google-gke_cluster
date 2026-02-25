@@ -243,11 +243,12 @@ variable "node_pools" {
   description = <<-EOT
   node_pool_name: An arbitrary name to identify the GKE node pool and its VMs & VM instance groups.
   
-  node_count_min_per_zone: The minimum number of nodes (per zone) this nodepool will allocate if
-  auto-down-scaling occurs.
-  
+  node_count_min_per_zone: The number of nodes (per zone) for this nodepool. When autoscaling is
+  enabled (node_count_max_per_zone > 0), this is the minimum node count for auto-down-scaling.
+  When autoscaling is disabled (node_count_max_per_zone = 0), this is the static node count.
+
   node_count_max_per_zone: The maximum number of nodes (per zone) this nodepool will allocate if
-  auto-up-scaling occurs.
+  auto-up-scaling occurs. Set to 0 to disable autoscaling and use a static node count.
 
   node_resource_labels: The GCE resource labels (a map of key/value pairs) to be applied to the nodes.
   Resource labels are applied to all nodes and persistent disks in the node pool. It can be used to track information
