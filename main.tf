@@ -383,10 +383,10 @@ resource "helm_release" "nginx_ingress_controller" {
     name  = "controller.resources.limits.memory"
     value = var.nginx_controller.memory_limit
   }
-  set = [{
+  set {
     name  = "controller.extraArgs.update-status"
     value = var.nginx_controller.update_status
-  }]
+  }
 
   depends_on = [google_container_cluster.k8s_cluster, google_compute_address.static_nginx_ip]
 }
