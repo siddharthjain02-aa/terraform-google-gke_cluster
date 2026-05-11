@@ -422,7 +422,7 @@ variable "nginx_controller" {
     memory_request = optional(string, "256Mi")
     memory_limit   = optional(string, "512Mi")
     extraArgs = {
-      update-sttus = option(bool, true)
+      update-sttus = optional(bool, true)
     }
   })
   default = {
