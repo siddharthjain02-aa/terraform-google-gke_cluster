@@ -421,7 +421,7 @@ variable "nginx_controller" {
     replica_count  = optional(number, 2)
     memory_request = optional(string, "256Mi")
     memory_limit   = optional(string, "512Mi")
-    extraArgs      = optional(object, {})
+    update_status  = optional(bool, true) ## extraArgs:
   })
   default = {
     enabled = false

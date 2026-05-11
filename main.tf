@@ -385,7 +385,7 @@ resource "helm_release" "nginx_ingress_controller" {
   }
   set = [{
     name  = "controller.extraArgs.update-status"
-    value = var.nginx_controller.extraArgs.update_status
+    value = var.nginx_controller.update_status
   }]
 
   depends_on = [google_container_cluster.k8s_cluster, google_compute_address.static_nginx_ip]
